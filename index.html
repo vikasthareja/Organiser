@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Diet Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            line-height: 1.45;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .stepper-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.1s ease, background-color 0.15s ease;
+        }
+        .stepper-btn:active {
+            transform: scale(0.92);
+        }
+
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased p-3 sm:p-6 lg:p-8 min-h-screen">
+    <div class="max-w-6xl mx-auto space-y-4">
+        
+        <!-- Header Banner -->
+        <header class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Diet Tracker</h1>
+                    <p class="text-xs sm:text-sm font-semibold text-emerald-600 mt-0.5">1,700 Net kcal Target &bull; High Protein &bull; Vegetarian Precision</p>
+                </div>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold w-fit border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    ICMR-NIN Aligned &bull; Saturated Fat &le; 20g
+                </div>
+            </div>
+        </header>
+
+        <!-- Top Date & Persistence Sync Bar -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">📅</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Date:</span>
+                    <button type="button" onclick="navigateDay(-1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs active:scale-95">&larr;</button>
+                    <input type="date" id="log-date" onchange="onDatePickerChange(this.value)" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 shadow-sm text-center">
+                    <button type="button" onclick="navigateDay(1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs active:scale-95">&rarr;</button>
+                </div>
+
+                <div class="flex items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                    <span id="sync-status" class="text-xs font-medium text-slate-500 truncate max-w-[200px]">Saved locally</span>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="openSyncSettings()" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1 shadow-sm">
+                            <span>⚙️</span>
+                            <span class="hidden sm:inline">Cloud</span>
+                        </button>
+                        <button type="button" onclick="syncDailyLog()" id="sync-btn" class="px-3.5 py-1.5 bg-emerald-600 active:scale-95 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
+                            <span>☁️</span>
+                            <span>Save Log</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Golden Rule Notice -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-3.5 sm:p-4 rounded-r-2xl shadow-sm text-amber-950 text-xs sm:text-sm">
+            <div class="flex items-start gap-2">
+                <span class="text-lg shrink-0">⚠️</span>
+                <div>
+                    <strong class="font-bold text-amber-900 uppercase tracking-wide text-xs">The Golden Rule (Tannin Trap):</strong>
+                    <p class="mt-0.5 text-amber-800 text-xs sm:text-sm leading-relaxed">
+                        Drink tea and eat biscuits/rusk at least <strong>45 to 60 minutes away from main meals</strong>. Tannins bind to <strong>Iron (Fe) &amp; Calcium</strong>, reducing bioavailability.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            
+            <!-- Food Steppers (7 Cols) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-5">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900">Daily Food Intake</h2>
+                    <span class="text-xs font-medium text-slate-400">Tap + / &minus; to adjust</span>
+                </div>
+
+                <!-- Sections -->
+                <div class="space-y-1.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-100 inline-block">🌅 Breakfast</h3>
+                    <div id="breakfast-steppers" class="divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-orange-800 bg-orange-50 px-2 py-1 rounded border border-orange-100 inline-block">🍎 Fruits &amp; Hydration</h3>
+                    <div id="fruit-steppers" class="divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-50 px-2 py-1 rounded border border-blue-100 inline-block">🥛 Dairy &amp; Protein Quota</h3>
+                    <div id="dairy-steppers" class="divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 inline-block">🥗 Grains, Dals &amp; Staples</h3>
+                    <div id="staple-steppers" class="divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2 py-1 rounded border border-teal-100 inline-block">🥤 Diet &amp; Zero Sodas</h3>
+                    <div id="soda-steppers" class="divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="bg-purple-50/60 border border-purple-200 rounded-xl p-3.5 space-y-1.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-purple-800">🍕 Occasional Treats</h3>
+                    <div id="treat-steppers" class="divide-y divide-purple-100"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Nutrition Targets & Clinical Analysis (5 Cols) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+                
+                <!-- Exercise Burn Offset -->
+                <div class="bg-sky-50 border border-sky-200 rounded-xl p-3.5 flex items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs sm:text-sm font-bold text-sky-900 flex items-center gap-1">
+                            <span>🚶‍♂️</span> Brisk Walk / Burn
+                        </span>
+                        <span class="text-[11px] text-sky-700 block mt-0.5">35% buffer (Net: &minus;<span id="net-exercise-offset" class="font-bold">98</span> kcal)</span>
+                    </div>
+                    <div class="inline-flex items-center bg-white border border-sky-200 rounded-lg shadow-sm overflow-hidden shrink-0">
+                        <button type="button" onclick="changeQty('exercise', -50)" class="stepper-btn w-8 h-8 bg-sky-600 text-white font-bold text-base">&minus;</button>
+                        <div class="w-10 text-center text-xs sm:text-sm font-bold text-slate-800" id="val-exercise">150</div>
+                        <button type="button" onclick="changeQty('exercise', 50)" class="stepper-btn w-8 h-8 bg-sky-600 text-white font-bold text-base">&#43;</button>
+                    </div>
+                </div>
+
+                <div class="pb-1 border-b border-slate-100">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-900">Nutrition Targets</h2>
+                    <p class="text-xs text-slate-500">ICMR-NIN guidelines &bull; Vitamin &amp; Mineral Panel</p>
+                </div>
+
+                <!-- Dynamic Macro / Micro Bars -->
+                <div id="macro-results" class="space-y-3.5"></div>
+
+                <!-- Cardiometabolic Health Analysis -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                    <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1">
+                            <span>🩺</span> Cardiometabolic Health Impact
+                        </h3>
+                        <span class="text-[10px] text-slate-400">Live Projection</span>
+                    </div>
+
+                    <!-- Heart Health & Lipids -->
+                    <div class="bg-white rounded-lg p-2.5 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">🫀 Heart Health &amp; Lipids</span>
+                            <span id="badge-heart" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Optimal</span>
+                        </div>
+                        <p id="desc-heart" class="text-[11px] text-slate-600 leading-snug"></p>
+                        <div class="pt-1.5 border-t border-slate-100 space-y-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                                <span>🧪</span> Recommended Tests:
+                            </span>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Lipid Profile (Total, LDL, HDL, Triglycerides)</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">ApoB</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">hs-CRP</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Lp(a)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blood Pressure (DASH) -->
+                    <div class="bg-white rounded-lg p-2.5 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">🩸 Blood Pressure (DASH)</span>
+                            <span id="badge-bp" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Balanced</span>
+                        </div>
+                        <p id="desc-bp" class="text-[11px] text-slate-600 leading-snug"></p>
+                        <div class="pt-1.5 border-t border-slate-100 space-y-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                                <span>🧪</span> Recommended Tests:
+                            </span>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Regular BP Screen (&lt;120/80 mmHg)</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Serum Electrolytes (Na, K, Cl)</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Kidney Panel (Serum Creatinine &amp; eGFR)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diabetes & Glycemic Response -->
+                    <div class="bg-white rounded-lg p-2.5 border border-slate-200 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">📉 Diabetes &amp; Glycemic Load</span>
+                            <span id="badge-diabetes" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Stable</span>
+                        </div>
+                        <p id="desc-diabetes" class="text-[11px] text-slate-600 leading-snug"></p>
+                        <div class="pt-1.5 border-t border-slate-100 space-y-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                                <span>🧪</span> Recommended Tests:
+                            </span>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">HbA1c (3-Month Glycemic Average)</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Fasting Blood Glucose (FBG) &amp; PP</span>
+                                <span class="bg-slate-100 text-slate-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-slate-200">Fasting Insulin / HOMA-IR</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appendices -->
+                <div class="space-y-2 pt-1">
+                    <details class="group border border-slate-200 rounded-xl bg-slate-50 overflow-hidden text-xs">
+                        <summary class="flex items-center justify-between p-3 cursor-pointer select-none font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                            <span>📖 Appendix A: Nutrient Reference</span>
+                            <span class="text-slate-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                        </summary>
+                        <div class="p-3 bg-white space-y-2.5 max-h-80 overflow-y-auto divide-y divide-slate-100" id="appendix-container"></div>
+                    </details>
+
+                    <details class="group border border-slate-200 rounded-xl bg-slate-50 overflow-hidden text-xs">
+                        <summary class="flex items-center justify-between p-3 cursor-pointer select-none font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                            <span>🥗 Appendix B: Base Veggies Rationale</span>
+                            <span class="text-slate-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                        </summary>
+                        <div class="p-3 bg-white space-y-2 text-slate-700 leading-relaxed max-h-80 overflow-y-auto">
+                            <p><strong>1.0 Daily Base Portion (200 kcal):</strong> Aggregated daily vegetables, tadka, salad and fresh lemon.</p>
+                            <ul class="list-disc list-inside space-y-1 text-slate-600">
+                                <li><strong>Onion &amp; Tomato Tadka:</strong> 80 kcal, 2.6g pro, 3.2g fib, 450mg K.</li>
+                                <li><strong>Cooked Sabzi (~130g):</strong> 85 kcal, 2.1g pro, 2.8g fib, 450mg K.</li>
+                                <li><strong>Salad:</strong> 35 kcal, 0.8g pro, 1.2g fib, 230mg K.</li>
+                                <li><strong>1/2 Fresh Lemon:</strong> +14mg Vitamin C baseline for non-heme iron conversion.</li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Cloud URL Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900">⚙️ Google Sheets Cloud URL</h3>
+                <button type="button" onclick="closeSyncSettings()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+            </div>
+            <p class="text-xs text-slate-600">Paste your deployed Google Apps Script Web App URL below:</p>
+            <input type="url" id="sheet-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-lg px-3 py-2 font-mono">
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeSyncSettings()" class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg">Cancel</button>
+                <button type="button" onclick="saveSyncSettings()" class="px-3.5 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SafeStorage = {
+            memory: {},
+            get(key) {
+                try {
+                    return window.localStorage ? window.localStorage.getItem(key) : (this.memory[key] || null);
+                } catch (e) {
+                    return this.memory[key] || null;
+                }
+            },
+            set(key, val) {
+                try {
+                    if (window.localStorage) {
+                        window.localStorage.setItem(key, val);
+                    }
+                } catch (e) {
+                    this.memory[key] = val;
+                }
+            }
+        };
+
+        const breakfastFoods = [
+            { id: 'bf_sandwich', name: "Potato Sandwich", desc: "Bread slice with lightly spiced potato filling. Paneer tracked in Dairy.", baseQty: 2, step: 1, min: 0, max: 6, unit: "bread slice", nutrients: { cal: 93, pro: 2.5, fib: 1.3, sat_fat: 0.6, unsat_fat: 1.5, cal_mg: 19, mag: 22, zn: 0.4, pot: 175, fe: 0.9, vit_a: 15, vit_c: 4.5, vit_b12: 0, vit_d: 0 } },
+            { id: 'bf_chila', name: "Besan / Moong Chila (Small)", desc: "Savory pancake from ~20g besan/moong batter with light oil.", baseQty: 0, step: 1, min: 0, max: 6, unit: "small chila (~20g batter)", nutrients: { cal: 70, pro: 3.3, fib: 1.6, sat_fat: 0.5, unsat_fat: 1.8, cal_mg: 13, mag: 20, zn: 0.4, pot: 110, fe: 0.9, vit_a: 12, vit_c: 1.5, vit_b12: 0, vit_d: 0 } },
+            { id: 'bf_parantha', name: "Stuffed Parantha (Aloo / Gobi)", desc: "Whole-wheat stuffed flatbread prepared with minimal oil/ghee.", baseQty: 0, step: 1, min: 0, max: 3, unit: "medium parantha", nutrients: { cal: 230, pro: 4.5, fib: 3.0, sat_fat: 2.2, unsat_fat: 3.5, cal_mg: 25, mag: 32, zn: 0.6, pot: 260, fe: 1.4, vit_a: 35, vit_c: 3.0, vit_b12: 0, vit_d: 0 } },
+            { id: 'bf_poha', name: "Vegetable Poha (with Peanuts)", desc: "Poha sautéed with mustard seeds, curry leaves, turmeric, and peanuts.", baseQty: 0, step: 1, min: 0, max: 3, unit: "plate (1.5 katori)", nutrients: { cal: 210, pro: 4.8, fib: 3.5, sat_fat: 1.2, unsat_fat: 4.5, cal_mg: 30, mag: 45, zn: 0.9, pot: 210, fe: 2.8, vit_a: 55, vit_c: 8.0, vit_b12: 0, vit_d: 0 } },
+            { id: 'bf_oats_khichdi', name: "Savory Oats Khichdi (Moong Dal)", desc: "Beta-glucan soluble fibre rolled oats simmered with yellow moong dal.", baseQty: 0, step: 1, min: 0, max: 3, unit: "bowl (1.5 katori)", nutrients: { cal: 195, pro: 7.2, fib: 5.4, sat_fat: 0.8, unsat_fat: 2.6, cal_mg: 45, mag: 70, zn: 1.2, pot: 320, fe: 2.2, vit_a: 45, vit_c: 2.5, vit_b12: 0, vit_d: 0 } }
+        ];
+
+        const fruitFoods = [
+            { id: 'apple', name: "Apple", desc: "Crisp prebiotic fiber-rich fruit with pectin for glycemic balance.", baseQty: 1, step: 1, min: 0, max: 4, unit: "portion (150g) / 1 medium", nutrients: { cal: 80, pro: 0.5, fib: 3.5, sat_fat: 0.05, unsat_fat: 0.15, cal_mg: 11, mag: 9, zn: 0.06, pot: 180, fe: 0.2, vit_a: 8, vit_c: 8.5, vit_b12: 0, vit_d: 0 } },
+            { id: 'guava', name: "Guava", desc: "Nutrient powerhouse: 1 medium fruit delivers 8.1g fibre and 342mg vitamin C.", baseQty: 0, step: 1, min: 0, max: 4, unit: "portion (150g) / 1 medium", nutrients: { cal: 102, pro: 3.8, fib: 8.1, sat_fat: 0.38, unsat_fat: 0.98, cal_mg: 27, mag: 33, zn: 0.35, pot: 625, fe: 0.45, vit_a: 47, vit_c: 342.0, vit_b12: 0, vit_d: 0 } },
+            { id: 'papaya', name: "Papaya", desc: "Digestive papain enzyme; rich in beta-carotene and bioavailable vitamin C.", baseQty: 0, step: 1, min: 0, max: 4, unit: "portion (150g)", nutrients: { cal: 65, pro: 0.8, fib: 2.7, sat_fat: 0.05, unsat_fat: 0.10, cal_mg: 30, mag: 18, zn: 0.12, pot: 273, fe: 0.38, vit_a: 82, vit_c: 93.0, vit_b12: 0, vit_d: 0 } },
+            { id: 'pineapple', name: "Pineapple", desc: "Natural bromelain enzyme, manganese, and anti-inflammatory vitamin C.", baseQty: 0, step: 1, min: 0, max: 4, unit: "portion (150g)", nutrients: { cal: 75, pro: 0.8, fib: 2.1, sat_fat: 0.02, unsat_fat: 0.14, cal_mg: 20, mag: 18, zn: 0.18, pot: 164, fe: 0.44, vit_a: 5, vit_c: 71.7, vit_b12: 0, vit_d: 0 } },
+            { id: 'blueberries', name: "Blueberries", desc: "Anthocyanin-dense berries supporting vascular nitric oxide & cognition.", baseQty: 0, step: 1, min: 0, max: 4, unit: "portion (100g)", nutrients: { cal: 57, pro: 0.7, fib: 2.4, sat_fat: 0.03, unsat_fat: 0.28, cal_mg: 6, mag: 6, zn: 0.16, pot: 77, fe: 0.28, vit_a: 3, vit_c: 9.7, vit_b12: 0, vit_d: 0 } },
+            { id: 'banana', name: "Banana", desc: "Digestible potassium, B6, and resistant starch.", baseQty: 0, step: 1, min: 0, max: 3, unit: "standard fruit", nutrients: { cal: 105, pro: 1.3, fib: 3.0, sat_fat: 0.1, unsat_fat: 0.2, cal_mg: 6, mag: 32, zn: 0.2, pot: 422, fe: 0.3, vit_a: 4, vit_c: 10.3, vit_b12: 0, vit_d: 0 } },
+            { id: 'coconut', name: "Tender Coconut Water", desc: "Natural isotonic electrolyte drink with potassium and magnesium.", baseQty: 0, step: 1, min: 0, max: 2, unit: "coconut (water + thin malai)", nutrients: { cal: 45, pro: 1.8, fib: 1.1, sat_fat: 1.2, unsat_fat: 0.2, cal_mg: 60, mag: 60, zn: 0.2, pot: 600, fe: 0.5, vit_a: 0, vit_c: 5.8, vit_b12: 0, vit_d: 0 } }
+        ];
+
+        const dairyFoods = [
+            { id: 'paneer', name: "Epigamia Low-Fat Paneer (Total Quota)", desc: "Core protein anchor: 25% protein density with minimal saturated fat.", baseQty: 0, step: 25, min: 0, max: 200, unit: "g (daily quota across meals)", nutrients: { cal: 2.3, pro: 0.25, fib: 0, sat_fat: 0.055, unsat_fat: 0.025, cal_mg: 2.08, mag: 0.23, zn: 0.015, pot: 0.9, fe: 0.005, vit_a: 0.5, vit_c: 0, vit_b12: 0.014, vit_d: 0.15 } },
+            { id: 'paneer_regular', name: "Normal Paneer (Standard / Dairy)", desc: "Whole-milk paneer: ~18% protein density with natural dairy fats.", baseQty: 25, step: 25, min: 0, max: 200, unit: "g (daily quota across meals)", nutrients: { cal: 2.65, pro: 0.18, fib: 0, sat_fat: 0.13, unsat_fat: 0.06, cal_mg: 4.8, mag: 0.25, zn: 0.02, pot: 1.0, fe: 0.002, vit_a: 1.8, vit_c: 0, vit_b12: 0.011, vit_d: 0.20 } },
+            { id: 'yogurt', name: "Epigamia Greek Yogurt", desc: "Strained yogurt with bioavailable vitamin A, B12, and live cultures.", baseQty: 1, step: 1, min: 0, max: 3, unit: "cup (85g)", nutrients: { cal: 75, pro: 6.5, fib: 0, sat_fat: 0.1, unsat_fat: 0.1, cal_mg: 90, mag: 9, zn: 0.5, pot: 120, fe: 0.1, vit_a: 25, vit_c: 0.5, vit_b12: 0.65, vit_d: 10 } },
+            { id: 'dahi_regular', name: "Normal Dahi / Curd", desc: "Whole-milk home curd in a standard katori. Provides calcium and vitamin A.", baseQty: 0, step: 1, min: 0, max: 4, unit: "standard katori (150g)", nutrients: { cal: 98, pro: 5.0, fib: 0, sat_fat: 3.2, unsat_fat: 1.5, cal_mg: 220, mag: 18, zn: 0.6, pot: 225, fe: 0.15, vit_a: 75, vit_c: 1.0, vit_b12: 0.60, vit_d: 15 } },
+            { id: 'milk_day', name: "Toned Milk - Tea", desc: "Toned milk (3.0% fat) allocated for morning/evening tea.", baseQty: 100, step: 25, min: 0, max: 300, unit: "mL", nutrients: { cal: 0.59, pro: 0.032, fib: 0, sat_fat: 0.0192, unsat_fat: 0.0108, cal_mg: 1.2, mag: 0.11, zn: 0.004, pot: 1.5, fe: 0.001, vit_a: 0.55, vit_c: 0.01, vit_b12: 0.0045, vit_d: 0.25 } },
+            { id: 'milk_night', name: "Toned Milk - Night", desc: "Warm bedtime toned milk (3.0% fat) providing slow-digesting casein.", baseQty: 100, step: 25, min: 0, max: 300, unit: "mL", nutrients: { cal: 0.59, pro: 0.032, fib: 0, sat_fat: 0.0192, unsat_fat: 0.0108, cal_mg: 1.2, mag: 0.11, zn: 0.004, pot: 1.5, fe: 0.001, vit_a: 0.55, vit_c: 0.01, vit_b12: 0.0045, vit_d: 0.25 } }
+        ];
+
+        const stapleFoods = [
+            { id: 'veggies', name: "Base Vegetables & Aromatics (Sabzi/Salad)", desc: "Cooked sabzi, raw salad, onions, and tomatoes contributing potassium and fibre.", baseQty: 1, step: 0.5, min: 0, max: 3, unit: "daily portion", nutrients: { cal: 200, pro: 5.5, fib: 7.2, sat_fat: 0.2, unsat_fat: 0.8, cal_mg: 125, mag: 95, zn: 1.0, pot: 1130, fe: 2.8, vit_a: 420, vit_c: 45.0, vit_b12: 0, vit_d: 0 } },
+            { id: 'roti', name: "Multigrain Rotis", desc: "Whole-grain flatbread offering sustained complex carbohydrates (2.5g protein/roti).", baseQty: 3, step: 1, min: 0, max: 6, unit: "roti", nutrients: { cal: 100, pro: 2.5, fib: 2.8, sat_fat: 0.3, unsat_fat: 1.2, cal_mg: 35, mag: 27, zn: 0.6, pot: 95, fe: 1.2, vit_a: 2, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'rice', name: "Cooked Rice", desc: "Easily digestible steamed carbohydrate; complements dal amino acid profiles.", baseQty: 0.5, step: 0.5, min: 0, max: 2, unit: "katori", nutrients: { cal: 140, pro: 3.4, fib: 0.6, sat_fat: 0.1, unsat_fat: 0.3, cal_mg: 14, mag: 30, zn: 1.0, pot: 74, fe: 0.4, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'dal', name: "Dal / Rajma / Soya (Soaked)", desc: "Legume or soya bowl loaded with plant iron, folate, and soluble fibre.", baseQty: 1, step: 0.5, min: 0, max: 3, unit: "large katori", nutrients: { cal: 150, pro: 12.0, fib: 7.0, sat_fat: 0.5, unsat_fat: 1.8, cal_mg: 60, mag: 65, zn: 2.1, pot: 500, fe: 3.2, vit_a: 45, vit_c: 3.5, vit_b12: 0, vit_d: 0 } },
+            { id: 'tea', name: "Tea (Without Sugar)", desc: "High in tannins; drink at least 45 to 60 mins away from iron-rich meals.", baseQty: 2, step: 1, min: 0, max: 6, unit: "cups (tannin gap reminder)", nutrients: { cal: 2, pro: 0.1, fib: 0, sat_fat: 0, unsat_fat: 0, cal_mg: 4, mag: 5, zn: 0.02, pot: 25, fe: 0.02, vit_a: 0, vit_c: 0.5, vit_b12: 0, vit_d: 0 } },
+            { id: 'biscuit', name: "Marie Biscuits", desc: "Light accompaniment; consume mindfully to moderate refined flour.", baseQty: 2, step: 1, min: 0, max: 10, unit: "biscuits", nutrients: { cal: 25, pro: 0.4, fib: 0.2, sat_fat: 0.3, unsat_fat: 0.4, cal_mg: 5, mag: 2.5, zn: 0.05, pot: 16, fe: 0.2, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'namkeen', name: "Namkeen Bhujia / Rusk", desc: "Crunchy snack (~11g bhujia or 1 rusk); monitor oil and sodium density.", baseQty: 0, step: 1, min: 0, max: 5, unit: "portion (~11g / 60 kcal)", nutrients: { cal: 60, pro: 0.8, fib: 0.4, sat_fat: 1.5, unsat_fat: 2.5, cal_mg: 4, mag: 4, zn: 0.08, pot: 16, fe: 0.3, vit_a: 5, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'peanuts', name: "Salted Peanuts", desc: "Roasted salted peanuts (20g); rich in plant protein, magnesium, and healthy MUFA.", baseQty: 0, step: 1, min: 0, max: 5, unit: "portion (20g)", nutrients: { cal: 118, pro: 5.0, fib: 1.6, sat_fat: 1.5, unsat_fat: 8.5, cal_mg: 18, mag: 34, zn: 0.65, pot: 140, fe: 0.7, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'seeds', name: "Seed Mix (Pumpkin, Flax, Sesame)", desc: "1:1:1 seed blend providing plant omega-3s, zinc, and magnesium.", baseQty: 1, step: 1, min: 0, max: 4, unit: "tbsp", nutrients: { cal: 85, pro: 3.3, fib: 2.2, sat_fat: 1.0, unsat_fat: 5.5, cal_mg: 62, mag: 65, zn: 1.3, pot: 105, fe: 2.0, vit_a: 8, vit_c: 0.3, vit_b12: 0, vit_d: 0 } },
+            { id: 'almonds', name: "Almonds", desc: "Whole almonds delivering vitamin E, magnesium, and monounsaturated lipids.", baseQty: 10, step: 5, min: 0, max: 30, unit: "nuts", nutrients: { cal: 7, pro: 0.25, fib: 0.3, sat_fat: 0.05, unsat_fat: 0.55, cal_mg: 3.2, mag: 3.2, zn: 0.04, pot: 8.7, fe: 0.3, vit_a: 1, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'walnut', name: "Walnuts (Tata Sampann Halves)", desc: "Shelled halves rich in ALA omega-3. 2 halves equal 1 whole walnut (~5g).", baseQty: 2, step: 1, min: 0, max: 10, unit: "pieces (halves)", nutrients: { cal: 17, pro: 0.38, fib: 0.17, sat_fat: 0.16, unsat_fat: 1.50, cal_mg: 2.5, mag: 4.0, zn: 0.08, pot: 11, fe: 0.07, vit_a: 1, vit_c: 0.05, vit_b12: 0, vit_d: 0 } },
+            { id: 'pistachio', name: "Pistachios (Tata Sampann)", desc: "Pistachio kernels rich in potassium, lutein, and carotenoids.", baseQty: 4, step: 1, min: 0, max: 3, unit: "nuts / kernels", nutrients: { cal: 4, pro: 0.14, fib: 0.07, sat_fat: 0.04, unsat_fat: 0.30, cal_mg: 0.7, mag: 0.85, zn: 0.015, pot: 7.2, fe: 0.03, vit_a: 3, vit_c: 0.04, vit_b12: 0, vit_d: 0 } },
+            { id: 'oil', name: "Cooking Oil / Ghee", desc: "Cooking fat calibrated to 4.0g saturated fat per tbsp.", baseQty: 1.5, step: 0.5, min: 0, max: 4, unit: "tbsp", nutrients: { cal: 120, pro: 0, fib: 0, sat_fat: 4.0, unsat_fat: 10.0, cal_mg: 0, mag: 0, zn: 0, pot: 0, fe: 0, vit_a: 80, vit_c: 0, vit_b12: 0, vit_d: 40 } }
+        ];
+
+        const sodaFoods = [
+            { id: 'soda_cola', name: "Diet Coke / Coke Zero / Pepsi Black", desc: "Zero-sugar cola with mild caffeine (~30mg). Negligible calories.", baseQty: 0, step: 1, min: 0, max: 6, unit: "can (250-300 mL)", nutrients: { cal: 1, pro: 0, fib: 0, sat_fat: 0, unsat_fat: 0, cal_mg: 0, mag: 0, zn: 0, pot: 25, fe: 0, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'soda_clear', name: "Sprite Zero / Diet 7UP", desc: "Zero-sugar clear lemon-lime soda. Caffeine-free and zero glycemic impact.", baseQty: 0, step: 1, min: 0, max: 6, unit: "can (250-300 mL)", nutrients: { cal: 1, pro: 0, fib: 0, sat_fat: 0, unsat_fat: 0, cal_mg: 0, mag: 0, zn: 0, pot: 15, fe: 0, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } }
+        ];
+
+        const treats = [
+            { id: 'treat_carb', name: "Garlic Naan / Samosa / Chaat", desc: "Street snack or bread; higher in refined carbs and sodium.", baseQty: 0, step: 1, min: 0, max: 3, unit: "portion", nutrients: { cal: 280, pro: 6.0, fib: 2.0, sat_fat: 4.0, unsat_fat: 8.0, cal_mg: 30, mag: 15, zn: 0.4, pot: 100, fe: 1.2, vit_a: 25, vit_c: 2.0, vit_b12: 0, vit_d: 0 } },
+            { id: 'treat_rich', name: "Dal Makhani / Paneer Tikka", desc: "Restaurant gravy preparation; higher fat and caloric load.", baseQty: 0, step: 1, min: 0, max: 3, unit: "katori/plate", nutrients: { cal: 280, pro: 12.0, fib: 3.5, sat_fat: 8.5, unsat_fat: 9.5, cal_mg: 100, mag: 30, zn: 1.0, pot: 200, fe: 2.5, vit_a: 140, vit_c: 3.0, vit_b12: 0.4, vit_d: 15 } },
+            { id: 'treat_heavy', name: "Biryani / Chhole Bhature / Pizza", desc: "Heavy meal: full plate biryani, chhole bhature, or half medium pizza.", baseQty: 0, step: 1, min: 0, max: 3, unit: "portion (700 kcal)", nutrients: { cal: 700, pro: 16.0, fib: 6.5, sat_fat: 12.0, unsat_fat: 16.0, cal_mg: 180, mag: 60, zn: 2.0, pot: 420, fe: 3.8, vit_a: 160, vit_c: 5.0, vit_b12: 0.5, vit_d: 20 } },
+            { id: 'treat_sweet', name: "Gulab Jamun / Ice Cream / Halwa", desc: "1 sweet serving; high in simple sugars and dairy fats.", baseQty: 0, step: 1, min: 0, max: 4, unit: "serving (1 pc / scoop)", nutrients: { cal: 180, pro: 2.5, fib: 0.4, sat_fat: 5.0, unsat_fat: 3.5, cal_mg: 50, mag: 15, zn: 0.3, pot: 90, fe: 0.4, vit_a: 60, vit_c: 0.2, vit_b12: 0.2, vit_d: 10 } }
+        ];
+
+        const allItems = [...breakfastFoods, ...fruitFoods, ...dairyFoods, ...stapleFoods, ...sodaFoods, ...treats];
+
+        function getTodayString() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+
+        let currentDate = getTodayString();
+        let currentValues = { exercise: 150 };
+        allItems.forEach(f => { currentValues[f.id] = f.baseQty; });
+
+        const targets = {
+            cal: { name: "Net Calories", goal: 1700, unit: "kcal", category: "energy" },
+            pro: { name: "Protein", goal: 60, unit: "g", category: "energy" },
+            fib: { name: "Dietary Fibre", goal: 30, unit: "g", category: "energy" },
+            sat_fat: { name: "Saturated Fat (Upper Limit)", goal: 20, unit: "g", isUpperLimit: true, category: "fat" },
+            unsat_fat: { name: "Unsaturated Fat (MUFA/PUFA)", goal: 30, unit: "g", category: "fat" },
+            fe: { name: "Iron (Fe)", goal: 19, unit: "mg", category: "mineral" },
+            cal_mg: { name: "Calcium", goal: 1000, unit: "mg", category: "mineral" },
+            mag: { name: "Magnesium", goal: 420, unit: "mg", category: "mineral" },
+            zn: { name: "Zinc", goal: 14, unit: "mg", category: "mineral" },
+            pot: { name: "Potassium", goal: 3500, unit: "mg", category: "mineral" },
+            vit_a: { name: "Vitamin A", goal: 1000, unit: "µg", category: "vitamin" },
+            vit_c: { name: "Vitamin C (with Lemon)", goal: 80, unit: "mg", category: "vitamin" },
+            vit_b12: { name: "Vitamin B12", goal: 2.2, unit: "µg", category: "vitamin" },
+            vit_d: { name: "Vitamin D", goal: 600, unit: "IU", category: "vitamin" }
+        };
+
+        function resetToDefaults() {
+            currentValues['exercise'] = 150;
+            allItems.forEach(f => { currentValues[f.id] = f.baseQty; });
+        }
+
+        function loadDayData(dateStr) {
+            currentDate = dateStr;
+            const input = document.getElementById('log-date');
+            if (input) input.value = dateStr;
+
+            const savedRaw = SafeStorage.get('diet_log_' + dateStr);
+            if (savedRaw) {
+                try {
+                    const parsed = JSON.parse(savedRaw);
+                    currentValues['exercise'] = (parsed.quantities && parsed.quantities.exercise !== undefined)
+                        ? parsed.quantities.exercise
+                        : (parsed.exercise !== undefined ? parsed.exercise : 150);
+
+                    allItems.forEach(item => {
+                        if (parsed.quantities && parsed.quantities[item.id] !== undefined) {
+                            currentValues[item.id] = parsed.quantities[item.id];
+                        } else if (parsed[item.id] !== undefined) {
+                            currentValues[item.id] = parsed[item.id];
+                        } else {
+                            currentValues[item.id] = item.baseQty;
+                        }
+                    });
+                    updateSyncStatusLabel("Restored log (" + (dateStr === getTodayString() ? "Today" : dateStr) + ")");
+                } catch (e) {
+                    resetToDefaults();
+                }
+            } else {
+                resetToDefaults();
+                updateSyncStatusLabel(dateStr === getTodayString() ? "New log for Today" : "Defaults loaded");
+            }
+
+            refreshDisplays();
+            calculateNutrition();
+        }
+
+        function autoSaveToLocal() {
+            const record = {
+                date: currentDate,
+                lastModified: new Date().toISOString(),
+                quantities: Object.assign({}, currentValues)
+            };
+            SafeStorage.set('diet_log_' + currentDate, JSON.stringify(record));
+            updateSyncStatusLabel("Saved locally");
+        }
+
+        function refreshDisplays() {
+            const exEl = document.getElementById('val-exercise');
+            if (exEl) exEl.innerText = currentValues['exercise'];
+            allItems.forEach(item => {
+                const el = document.getElementById('val-' + item.id);
+                if (el) el.innerText = currentValues[item.id];
+            });
+        }
+
+        function updateSyncStatusLabel(text) {
+            const el = document.getElementById('sync-status');
+            if (el) el.innerText = text;
+        }
+
+        window.changeQty = function(id, delta) {
+            if (id === 'exercise') {
+                let v = currentValues['exercise'] + delta;
+                if (v < 0) v = 0;
+                if (v > 1500) v = 1500;
+                currentValues['exercise'] = v;
+                const el = document.getElementById('val-exercise');
+                if (el) el.innerText = v;
+            } else {
+                const item = allItems.find(f => f.id === id);
+                if (item) {
+                    let v = Math.round((currentValues[id] + delta) * 100) / 100;
+                    if (v < item.min) v = item.min;
+                    if (v > item.max) v = item.max;
+                    currentValues[id] = v;
+                    const el = document.getElementById('val-' + id);
+                    if (el) el.innerText = v;
+                }
+            }
+            autoSaveToLocal();
+            calculateNutrition();
+        };
+
+        window.onDatePickerChange = function(newDate) {
+            if (!newDate) return;
+            autoSaveToLocal();
+            loadDayData(newDate);
+        };
+
+        window.navigateDay = function(deltaDays) {
+            autoSaveToLocal();
+            const parts = currentDate.split('-').map(Number);
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            d.setDate(d.getDate() + deltaDays);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            loadDayData(y + '-' + m + '-' + day);
+        };
+
+        window.openSyncSettings = function() {
+            const modal = document.getElementById('settings-modal');
+            const input = document.getElementById('sheet-url-input');
+            const savedUrl = SafeStorage.get('diet_tracker_sheet_url') || "";
+            if (input) input.value = savedUrl;
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.closeSyncSettings = function() {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.saveSyncSettings = function() {
+            const input = document.getElementById('sheet-url-input');
+            const url = input ? input.value.trim() : "";
+            SafeStorage.set('diet_tracker_sheet_url', url);
+            closeSyncSettings();
+            updateSyncStatusLabel(url ? "Sheets URL saved" : "Local mode active");
+        };
+
+        window.syncDailyLog = async function() {
+            const btn = document.getElementById('sync-btn');
+            const oldHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span><span>Saving...</span>';
+
+            autoSaveToLocal();
+
+            let totals = { cal: 0, pro: 0, fib: 0, sat_fat: 0, unsat_fat: 0, fe: 0, cal_mg: 0, mag: 0, zn: 0, pot: 0, vit_a: 0, vit_c: 14, vit_b12: 0, vit_d: 0 };
+            allItems.forEach(item => {
+                let qty = currentValues[item.id];
+                Object.keys(item.nutrients).forEach(k => {
+                    if (totals[k] !== undefined) totals[k] += (item.nutrients[k] * qty);
+                });
+            });
+
+            const rawExercise = currentValues['exercise'] || 0;
+            const netExercise = Math.round(rawExercise * (1 - 0.35));
+            totals.cal = Math.max(0, totals.cal - netExercise);
+
+            let activeItems = [];
+            allItems.forEach(item => {
+                let q = currentValues[item.id];
+                if (q > 0) activeItems.push(item.name + ' (' + q + ' ' + item.unit + ')');
+            });
+
+            const payload = {
+                date: currentDate,
+                netCalories: Math.round(totals.cal),
+                protein: Math.round(totals.pro * 10) / 10,
+                fibre: Math.round(totals.fib * 10) / 10,
+                saturatedFat: Math.round(totals.sat_fat * 10) / 10,
+                unsaturatedFat: Math.round(totals.unsat_fat * 10) / 10,
+                iron: Math.round(totals.fe * 10) / 10,
+                calcium: Math.round(totals.cal_mg),
+                magnesium: Math.round(totals.mag),
+                zinc: Math.round(totals.zn * 10) / 10,
+                potassium: Math.round(totals.pot),
+                vitaminA: Math.round(totals.vit_a),
+                vitaminC: Math.round(totals.vit_c),
+                vitaminB12: Math.round(totals.vit_b12 * 100) / 100,
+                vitaminD: Math.round(totals.vit_d),
+                grossExercise: rawExercise,
+                netExercise: netExercise,
+                itemSummary: activeItems.join('; '),
+                quantities: currentValues
+            };
+
+            const sheetUrl = SafeStorage.get('diet_tracker_sheet_url');
+            if (!sheetUrl) {
+                updateSyncStatusLabel("Saved locally! Configure Cloud in ⚙️");
+                btn.innerHTML = '<span>✓</span><span>Saved Locally</span>';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHTML;
+                }, 2000);
+                return;
+            }
+
+            try {
+                await fetch(sheetUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                updateSyncStatusLabel("Synced to Google Sheets");
+                btn.innerHTML = '<span>✓</span><span>Synced!</span>';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = oldHTML;
+                }, 2000);
+            } catch (err) {
+                updateSyncStatusLabel("Cloud sync error (Saved locally)");
+                btn.disabled = false;
+                btn.innerHTML = '<span>⚠️</span><span>Retry</span>';
+            }
+        };
+
+        window.calculateNutrition = function() {
+            let totals = { cal: 0, pro: 0, fib: 0, sat_fat: 0, unsat_fat: 0, fe: 0, cal_mg: 0, mag: 0, zn: 0, pot: 0, vit_a: 0, vit_c: 14, vit_b12: 0, vit_d: 0 };
+            allItems.forEach(item => {
+                let qty = currentValues[item.id];
+                Object.keys(item.nutrients).forEach(k => {
+                    if (totals[k] !== undefined) totals[k] += (item.nutrients[k] * qty);
+                });
+            });
+
+            const rawExercise = currentValues['exercise'];
+            const netExerciseOffset = Math.round(rawExercise * (1 - 0.35));
+            const netOffsetEl = document.getElementById('net-exercise-offset');
+            if (netOffsetEl) netOffsetEl.innerText = netExerciseOffset;
+
+            totals['cal'] = Math.max(0, totals['cal'] - netExerciseOffset);
+
+            Object.keys(targets).forEach(key => {
+                const target = targets[key];
+                const total = totals[key];
+                const pct = Math.min((total / target.goal) * 100, 100);
+
+                let roundedTotal = (key === 'vit_b12')
+                    ? (Math.round(total * 100) / 100).toFixed(2)
+                    : (key === 'vit_a' || key === 'vit_d' || key === 'cal' || key === 'cal_mg' || key === 'mag' || key === 'pot')
+                        ? Math.round(total)
+                        : (Math.round(total * 10) / 10).toFixed(1);
+
+                const textEl = document.getElementById('text-' + key);
+                const bar = document.getElementById('bar-' + key);
+                if (!textEl || !bar) return;
+
+                bar.style.width = pct + '%';
+
+                if (key === 'cal') {
+                    if (total > target.goal) {
+                        const surplus = Math.round(total - target.goal);
+                        textEl.innerHTML = '<span class="font-bold text-amber-600">' + Math.round(total) + '</span> / ' + target.goal + ' ' + target.unit + ' <span class="text-xs font-bold text-rose-500">(+' + surplus + ' kcal)</span>';
+                        bar.className = 'progress-bar h-full rounded-full bg-amber-500';
+                    } else {
+                        textEl.innerHTML = '<span class="font-bold text-emerald-700">' + Math.round(total) + '</span> / ' + target.goal + ' ' + target.unit;
+                        bar.className = 'progress-bar h-full rounded-full bg-emerald-500';
+                    }
+                } else if (target.isUpperLimit) {
+                    const roundedTotalNum = Math.round(total * 10) / 10;
+                    const isExceeded = roundedTotalNum > target.goal;
+                    const overAmt = (Math.round((roundedTotalNum - target.goal) * 10) / 10).toFixed(1);
+                    textEl.innerHTML = '<span class="' + (isExceeded ? 'font-bold text-rose-600' : 'font-bold text-emerald-700') + '">' + roundedTotal + '</span> / ' + target.goal + ' ' + target.unit + ' ' + (isExceeded ? '<span class="text-[11px] text-rose-600 font-bold">(+' + overAmt + 'g over)</span>' : '<span class="text-[11px] text-emerald-600 font-semibold">(Safe)</span>');
+                    bar.className = 'progress-bar h-full rounded-full ' + (isExceeded ? 'bg-rose-500' : 'bg-emerald-500');
+                } else {
+                    const isMet = total >= target.goal;
+                    textEl.innerHTML = '<span class="' + (isMet ? 'font-bold text-emerald-700' : 'font-medium text-slate-700') + '">' + roundedTotal + '</span> / ' + target.goal + ' ' + target.unit;
+                    bar.className = 'progress-bar h-full rounded-full ' + (isMet ? 'bg-emerald-500' : 'bg-slate-300');
+                }
+
+                // Breakdown dropdown
+                const breakdownContainer = document.getElementById('breakdown-' + key);
+                if (breakdownContainer) {
+                    let contributors = [];
+                    allItems.forEach(item => {
+                        let qty = currentValues[item.id];
+                        if (qty > 0 && item.nutrients[key] !== undefined && item.nutrients[key] > 0) {
+                            contributors.push({ name: item.name, amount: item.nutrients[key] * qty });
+                        }
+                    });
+
+                    if (key === 'vit_c') {
+                        contributors.push({ name: "🍋 Daily Fresh Lemon (Assumed 1/2 Lemon)", amount: 14 });
+                    }
+
+                    contributors.sort((a, b) => b.amount - a.amount);
+                    let grossTotal = contributors.reduce((s, c) => s + c.amount, 0);
+                    let bHTML = "";
+
+                    if (key === 'cal' && netExerciseOffset > 0) {
+                        bHTML += '<div class="flex justify-between items-center text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-1 rounded border border-sky-100 mb-1"><span>🚶‍♂️ Exercise Offset</span><span>&minus;' + netExerciseOffset + ' kcal</span></div>';
+                    }
+
+                    if (key === 'vit_c') {
+                        bHTML += '<div class="text-[10px] text-amber-900 bg-amber-50 px-2 py-1.5 rounded border border-amber-200 mb-1.5 leading-tight">🍋 <strong>Assumed 1/2 Fresh Lemon (+14 mg):</strong> Daily baseline squeezed over meals; converts plant ferric iron (Fe³⁺ → Fe²⁺) to boost mineral absorption.</div>';
+                    }
+
+                    if (contributors.length === 0) {
+                        bHTML += '<div class="text-[11px] text-slate-400 italic py-1 text-center">No active food sources.</div>';
+                    } else {
+                        contributors.forEach(c => {
+                            let share = grossTotal > 0 ? Math.round((c.amount / grossTotal) * 100) : 0;
+                            let amtDisplay = (key === 'cal' || key === 'cal_mg' || key === 'mag' || key === 'pot' || key === 'vit_a' || key === 'vit_d')
+                                ? Math.round(c.amount)
+                                : (key === 'vit_b12' ? (Math.round(c.amount * 100) / 100).toFixed(2) : (Math.round(c.amount * 10) / 10).toFixed(1));
+                            bHTML += '<div class="flex items-center justify-between text-[11px] py-0.5 px-1 hover:bg-slate-100 rounded"><span class="text-slate-700 truncate pr-2">' + c.name + '</span><span class="text-slate-600 font-medium shrink-0">' + amtDisplay + ' ' + target.unit + ' <span class="text-slate-400 text-[10px]">(' + share + '%)</span></span></div>';
+                        });
+                    }
+                    breakdownContainer.innerHTML = bHTML;
+                }
+            });
+
+            evaluateCardiometabolicImpacts(totals);
+        };
+
+        function evaluateCardiometabolicImpacts(t) {
+            const badgeHeart = document.getElementById('badge-heart');
+            const descHeart = document.getElementById('desc-heart');
+            const roundedSatFat = Math.round(t.sat_fat * 10) / 10;
+
+            if (roundedSatFat <= 20.0 && t.unsat_fat >= 20 && t.fib >= 25) {
+                badgeHeart.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+                badgeHeart.innerText = "Cardioprotective";
+                descHeart.innerHTML = "<strong>Atheroprotective profile:</strong> Low saturated fat (" + roundedSatFat.toFixed(1) + "g ≤ 20g) with healthy unsaturated fats (" + t.unsat_fat.toFixed(1) + "g) and soluble fibre aids LDL clearance.";
+            } else if (roundedSatFat > 20.0) {
+                badgeHeart.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800";
+                badgeHeart.innerText = "Elevated Sat Fat";
+                descHeart.innerHTML = "<strong>Atherogenic risk flagged:</strong> Saturated fat (" + roundedSatFat.toFixed(1) + "g) exceeds the 20.0g threshold. High circulating SFAs downregulate hepatic LDL clearance receptors.";
+            } else {
+                badgeHeart.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700";
+                badgeHeart.innerText = "Moderate";
+                descHeart.innerHTML = "Saturated fat is within safe limits (" + roundedSatFat.toFixed(1) + "g). Boost seeds or walnuts to increase cardioprotective ALA omega-3.";
+            }
+
+            const badgeBP = document.getElementById('badge-bp');
+            const descBP = document.getElementById('desc-bp');
+            if (t.pot >= 3000 && t.mag >= 320) {
+                badgeBP.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+                badgeBP.innerText = "Protective DASH Balance";
+                descBP.innerHTML = "<strong>Vascular dilation:</strong> High potassium (" + Math.round(t.pot) + "mg) and magnesium (" + Math.round(t.mag) + "mg) balance dietary sodium and relax arterial tone.";
+            } else if (t.pot >= 2000) {
+                badgeBP.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800";
+                badgeBP.innerText = "Moderate Vasodilation";
+                descBP.innerHTML = "Potassium is at " + Math.round(t.pot) + "mg (Target: 3,500mg). Add tender coconut water, guava, or sabzi to enhance sodium clearance.";
+            } else {
+                badgeBP.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
+                badgeBP.innerText = "Potassium Deficit";
+                descBP.innerHTML = "Potassium (" + Math.round(t.pot) + "mg) is below DASH target. Prioritize fresh greens, fruits, or tender coconut water.";
+            }
+
+            const badgeDia = document.getElementById('badge-diabetes');
+            const descDia = document.getElementById('desc-diabetes');
+            const hasHeavyTreats = (currentValues['treat_heavy'] > 0 || currentValues['treat_carb'] > 1 || currentValues['treat_sweet'] > 0);
+            if (t.fib >= 28 && t.pro >= 55 && !hasHeavyTreats) {
+                badgeDia.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+                badgeDia.innerText = "High Insulin Sensitivity";
+                descDia.innerHTML = "<strong>Optimal glucose buffering:</strong> High fibre (" + t.fib.toFixed(1) + "g) and protein (" + t.pro.toFixed(1) + "g) blunt post-meal glucose surges.";
+            } else if (hasHeavyTreats || t.fib < 18) {
+                badgeDia.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
+                badgeDia.innerText = "High Glycemic Load Risk";
+                descDia.innerHTML = "<strong>Postprandial spike alert:</strong> Low fibre buffer (" + t.fib.toFixed(1) + "g) or treats logged. Pair carbs with paneer or seeds.";
+            } else {
+                badgeDia.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700";
+                badgeDia.innerText = "Balanced Glycemic Response";
+                descDia.innerHTML = "Adequate fibre (" + t.fib.toFixed(1) + "g) and steady protein intake maintain stable glucose release.";
+            }
+        }
+
+        function initUI() {
+            const renderSteppers = (items, containerId, btnBgClass) => {
+                let html = "";
+                items.forEach(item => {
+                    html += '<div class="py-2.5 flex items-center justify-between gap-3">' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<span class="text-xs sm:text-sm font-semibold text-slate-800 block truncate">' + item.name + '</span>' +
+                            '<span class="text-[11px] text-slate-500 block">' + item.unit + '</span>' +
+                        '</div>' +
+                        '<div class="inline-flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden shrink-0 shadow-sm">' +
+                            '<button type="button" onclick="changeQty(\'' + item.id + '\', -' + item.step + ')" class="stepper-btn w-8 h-8 ' + btnBgClass + ' text-white font-bold text-base">&minus;</button>' +
+                            '<div class="w-11 sm:w-12 text-center text-xs sm:text-sm font-bold text-slate-700" id="val-' + item.id + '">' + item.baseQty + '</div>' +
+                            '<button type="button" onclick="changeQty(\'' + item.id + '\', ' + item.step + ')" class="stepper-btn w-8 h-8 ' + btnBgClass + ' text-white font-bold text-base">&#43;</button>' +
+                        '</div>' +
+                    '</div>';
+                });
+                const container = document.getElementById(containerId);
+                if (container) container.innerHTML = html;
+            };
+
+            renderSteppers(breakfastFoods, 'breakfast-steppers', 'bg-amber-600');
+            renderSteppers(fruitFoods, 'fruit-steppers', 'bg-orange-500');
+            renderSteppers(dairyFoods, 'dairy-steppers', 'bg-blue-600');
+            renderSteppers(stapleFoods, 'staple-steppers', 'bg-emerald-600');
+            renderSteppers(sodaFoods, 'soda-steppers', 'bg-teal-600');
+            renderSteppers(treats, 'treat-steppers', 'bg-purple-600');
+
+            let resultsHTML = "";
+            let currentCat = "";
+            const catHeaders = {
+                energy: "⚡ Core Macros & Energy",
+                fat: "🥑 Fat Quality & Distribution",
+                mineral: "🛡️ Essential Minerals & Electrolytes",
+                vitamin: "💊 Essential Vitamins"
+            };
+
+            Object.keys(targets).forEach(key => {
+                const target = targets[key];
+                if (target.category !== currentCat) {
+                    currentCat = target.category;
+                    resultsHTML += '<div class="pt-2 pb-1 first:pt-0"><span class="text-[11px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">' + catHeaders[currentCat] + '</span></div>';
+                }
+                resultsHTML += '<div class="border-b border-slate-100 pb-2.5 last:border-b-0">' +
+                    '<div class="flex justify-between items-baseline mb-1">' +
+                        '<span class="text-xs sm:text-sm font-semibold text-slate-700">' + target.name + '</span>' +
+                        '<span id="text-' + key + '" class="text-xs sm:text-sm font-medium text-slate-500">0 / ' + target.goal + ' ' + target.unit + '</span>' +
+                    '</div>' +
+                    '<div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">' +
+                        '<div id="bar-' + key + '" class="progress-bar h-full rounded-full bg-slate-300" style="width: 0%"></div>' +
+                    '</div>' +
+                    '<details class="mt-1 text-xs">' +
+                        '<summary class="cursor-pointer select-none text-[11px] text-slate-500 hover:text-slate-800 flex items-center justify-between py-0.5"><span>📊 Breakdown</span><span class="text-[9px] text-slate-400">▼</span></summary>' +
+                        '<div id="breakdown-' + key + '" class="mt-1 space-y-1 bg-slate-50 rounded-lg p-2 border border-slate-200 max-h-44 overflow-y-auto"></div>' +
+                    '</details>' +
+                '</div>';
+            });
+
+            const resultsContainer = document.getElementById('macro-results');
+            if (resultsContainer) resultsContainer.innerHTML = resultsHTML;
+
+            const appContainer = document.getElementById('appendix-container');
+            if (appContainer) {
+                let appHTML = "";
+                allItems.forEach(item => {
+                    const n = item.nutrients;
+                    const is100 = item.id.includes('paneer') || item.id.includes('milk');
+                    const mult = is100 ? 100 : 1;
+                    const lbl = is100 ? (item.id.includes('milk') ? "per 100 mL" : "per 100 g") : ("per " + item.unit);
+                    appHTML += '<div class="pt-2 first:pt-0">' +
+                        '<div class="flex items-baseline justify-between gap-2"><span class="font-semibold text-slate-800 text-xs">' + item.name + '</span><span class="text-[10px] text-slate-400">' + lbl + '</span></div>' +
+                        '<p class="text-[11px] text-slate-500 mt-0.5 mb-1">' + (item.desc || "") + '</p>' +
+                        '<div class="flex flex-wrap gap-1 text-[10px] text-slate-600">' +
+                            '<span class="bg-amber-50 text-amber-800 px-1 py-0.5 rounded border border-amber-200 font-medium">' + Math.round(n.cal * mult) + ' kcal</span>' +
+                            '<span class="bg-blue-50 text-blue-800 px-1 py-0.5 rounded border border-blue-200">P: ' + (n.pro * mult).toFixed(1) + 'g</span>' +
+                            '<span class="bg-emerald-50 text-emerald-800 px-1 py-0.5 rounded border border-emerald-200">Fib: ' + (n.fib * mult).toFixed(1) + 'g</span>' +
+                            '<span class="bg-indigo-50 text-indigo-800 px-1 py-0.5 rounded border border-indigo-200">SatFat: ' + (n.sat_fat * mult).toFixed(1) + 'g</span>' +
+                            '<span class="bg-teal-50 text-teal-800 px-1 py-0.5 rounded border border-teal-200">Unsat: ' + (n.unsat_fat * mult).toFixed(1) + 'g</span>' +
+                            '<span class="bg-rose-50 text-rose-800 px-1 py-0.5 rounded border border-rose-200">Fe: ' + (n.fe * mult).toFixed(1) + 'mg</span>' +
+                            '<span class="bg-slate-100 text-slate-700 px-1 py-0.5 rounded border border-slate-200">K: ' + Math.round(n.pot * mult) + 'mg</span>' +
+                            '<span class="bg-amber-50 text-amber-900 px-1 py-0.5 rounded border border-amber-200">Vit A: ' + Math.round(n.vit_a * mult) + 'µg</span>' +
+                            '<span class="bg-orange-50 text-orange-800 px-1 py-0.5 rounded border border-orange-200">Vit C: ' + (n.vit_c * mult).toFixed(1) + 'mg</span>' +
+                            '<span class="bg-purple-50 text-purple-800 px-1 py-0.5 rounded border border-purple-200">B12: ' + (n.vit_b12 * mult).toFixed(2) + 'µg</span>' +
+                        '</div>' +
+                    '</div>';
+                });
+                appContainer.innerHTML = appHTML;
+            }
+
+            loadDayData(currentDate);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initUI);
+        } else {
+            initUI();
+        }
+    </script>
+</body>
+</html>
