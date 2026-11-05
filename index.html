@@ -116,12 +116,20 @@
             
             <!-- Food Steppers (7 Cols) -->
             <div class="lg:col-span-7 bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4">
-                <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                
+                <!-- Expanded Global Controls Header -->
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 gap-2">
                     <div>
                         <h2 class="text-base sm:text-lg font-bold text-slate-900">Daily Food Intake</h2>
-                        <span class="text-xs font-medium text-slate-400">Tap header to expand / collapse</span>
+                        <span class="text-xs font-medium text-slate-400">Tap header to expand</span>
                     </div>
-                    <button type="button" onclick="toggleAllFoodCategories()" id="toggle-categories-btn" class="text-[11px] font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition border border-slate-200 active:scale-95">Collapse All</button>
+                    <div class="flex flex-col items-end gap-1.5 shrink-0">
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="resetAll(true)" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition border border-slate-200 active:scale-95">Default</button>
+                            <button type="button" onclick="resetAll(false)" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition border border-slate-200 active:scale-95">Zero</button>
+                        </div>
+                        <button type="button" onclick="toggleAllFoodCategories()" id="toggle-categories-btn" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded w-full transition border border-slate-200 active:scale-95">Collapse All</button>
+                    </div>
                 </div>
 
                 <div id="food-categories-container" class="space-y-3">
@@ -133,7 +141,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="breakfast-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -146,7 +154,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="fruit-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -159,7 +167,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="dairy-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -172,7 +180,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="veggie-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -185,7 +193,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="grain-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -198,7 +206,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="snack-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -211,7 +219,7 @@
                             </span>
                             <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white">
+                        <div class="px-3 pb-2 pt-1.5 bg-white">
                             <div id="soda-steppers" class="divide-y divide-slate-100"></div>
                         </div>
                     </details>
@@ -224,7 +232,7 @@
                             </span>
                             <span class="text-[10px] text-purple-400 group-open:rotate-180 transition-transform duration-150">▼</span>
                         </summary>
-                        <div class="px-3 pb-2 pt-1 bg-white/70">
+                        <div class="px-3 pb-2 pt-1.5 bg-white/70">
                             <div id="treat-steppers" class="divide-y divide-purple-100"></div>
                         </div>
                     </details>
@@ -384,7 +392,7 @@
             { id: 'bf_chila', name: "Besan / Moong Chila (Small)", desc: "Savory pancake from ~20g besan/moong batter with light oil.", baseQty: 0, step: 1, min: 0, max: 6, unit: "small chila (~20g batter)", nutrients: { cal: 70, pro: 3.3, fib: 1.6, sat_fat: 0.5, unsat_fat: 1.8, cal_mg: 13, mag: 20, zn: 0.4, pot: 110, fe: 0.9, vit_a: 12, vit_c: 1.5, vit_b12: 0, vit_d: 0 } },
             { id: 'bf_parantha', name: "Stuffed Parantha (Aloo / Gobi)", desc: "Whole-wheat stuffed flatbread prepared with minimal oil/ghee.", baseQty: 0, step: 1, min: 0, max: 3, unit: "medium parantha", nutrients: { cal: 230, pro: 4.5, fib: 3.0, sat_fat: 2.2, unsat_fat: 3.5, cal_mg: 25, mag: 32, zn: 0.6, pot: 260, fe: 1.4, vit_a: 35, vit_c: 3.0, vit_b12: 0, vit_d: 0 } },
             { id: 'bf_poha', name: "Vegetable Poha (with Peanuts)", desc: "Poha sautéed with mustard seeds, curry leaves, turmeric, and peanuts.", baseQty: 0, step: 1, min: 0, max: 3, unit: "plate (1.5 katori)", nutrients: { cal: 210, pro: 4.8, fib: 3.5, sat_fat: 1.2, unsat_fat: 4.5, cal_mg: 30, mag: 45, zn: 0.9, pot: 210, fe: 2.8, vit_a: 55, vit_c: 8.0, vit_b12: 0, vit_d: 0 } },
-            { id: 'bf_oats_khichdi', name: "Savory Oats Khichdi (Moong Dal)", desc: "Beta-glucan soluble fibre rolled oats simmered with yellow moong dal.", baseQty: 0, step: 1, min: 0, max: 3, unit: "bowl (1.5 katori)", nutrients: { cal: 195, pro: 7.2, fib: 5.4, sat_fat: 0.8, unsat_fat: 2.6, cal_mg: 45, mag: 70, zn: 1.2, pot: 320, fe: 2.2, vit_a: 45, vit_c: 2.5, vit_b12: 0, vit_d: 0 } }
+            { id: 'bf_oats_khichdi', name: "Savory Oats Khichdi (Moong Dal)", desc: "Beta-glucan soluble fibre rolled oats simmered with yellow moong dal.", baseQty: 1.5, step: 0.5, min: 0, max: 5, unit: "katori", nutrients: { cal: 130, pro: 4.8, fib: 3.6, sat_fat: 0.5, unsat_fat: 1.7, cal_mg: 30, mag: 47, zn: 0.8, pot: 213, fe: 1.5, vit_a: 30, vit_c: 1.7, vit_b12: 0, vit_d: 0 } }
         ];
 
         const fruitFoods = [
@@ -454,6 +462,17 @@
 
         const allItems = [...breakfastFoods, ...fruitFoods, ...dairyFoods, ...veggieFoods, ...grainFoods, ...snackFoods, ...sodaFoods, ...treats];
 
+        const categoryMap = {
+            'breakfastFoods': breakfastFoods,
+            'fruitFoods': fruitFoods,
+            'dairyFoods': dairyFoods,
+            'veggieFoods': veggieFoods,
+            'grainFoods': grainFoods,
+            'snackFoods': snackFoods,
+            'sodaFoods': sodaFoods,
+            'treats': treats
+        };
+
         function getTodayString() {
             const d = new Date();
             const y = d.getFullYear();
@@ -487,6 +506,27 @@
             currentValues['exercise'] = 150;
             allItems.forEach(f => { currentValues[f.id] = f.baseQty; });
         }
+
+        window.resetAll = function(toDefault) {
+            currentValues['exercise'] = toDefault ? 150 : 0;
+            allItems.forEach(item => {
+                currentValues[item.id] = toDefault ? item.baseQty : 0;
+            });
+            autoSaveToLocal();
+            refreshDisplays();
+            calculateNutrition();
+        };
+
+        window.resetCategory = function(catName, toDefault) {
+            const items = categoryMap[catName];
+            if (!items) return;
+            items.forEach(item => {
+                currentValues[item.id] = toDefault ? item.baseQty : 0;
+            });
+            autoSaveToLocal();
+            refreshDisplays();
+            calculateNutrition();
+        };
 
         function loadDayData(dateStr) {
             currentDate = dateStr;
@@ -860,8 +900,11 @@
 
         function initUI() {
             try {
-                const renderSteppers = (items, containerId, btnBgClass) => {
-                    let html = "";
+                const renderSteppers = (items, containerId, btnBgClass, catName) => {
+                    let html = `<div class="flex justify-end gap-1.5 mb-1 pb-1.5 border-b border-slate-100">
+                        <button type="button" onclick="resetCategory('${catName}', true)" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition">Default</button>
+                        <button type="button" onclick="resetCategory('${catName}', false)" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition">Zero</button>
+                    </div>`;
                     items.forEach(item => {
                         html += '<div class="py-2.5 flex items-center justify-between gap-3">' +
                             '<div class="flex-1 min-w-0">' +
@@ -879,14 +922,14 @@
                     if (container) container.innerHTML = html;
                 };
 
-                renderSteppers(breakfastFoods, 'breakfast-steppers', 'bg-amber-600');
-                renderSteppers(fruitFoods, 'fruit-steppers', 'bg-orange-500');
-                renderSteppers(dairyFoods, 'dairy-steppers', 'bg-blue-600');
-                renderSteppers(veggieFoods, 'veggie-steppers', 'bg-emerald-600');
-                renderSteppers(grainFoods, 'grain-steppers', 'bg-amber-700');
-                renderSteppers(snackFoods, 'snack-steppers', 'bg-stone-600');
-                renderSteppers(sodaFoods, 'soda-steppers', 'bg-teal-600');
-                renderSteppers(treats, 'treat-steppers', 'bg-purple-600');
+                renderSteppers(breakfastFoods, 'breakfast-steppers', 'bg-amber-600', 'breakfastFoods');
+                renderSteppers(fruitFoods, 'fruit-steppers', 'bg-orange-500', 'fruitFoods');
+                renderSteppers(dairyFoods, 'dairy-steppers', 'bg-blue-600', 'dairyFoods');
+                renderSteppers(veggieFoods, 'veggie-steppers', 'bg-emerald-600', 'veggieFoods');
+                renderSteppers(grainFoods, 'grain-steppers', 'bg-amber-700', 'grainFoods');
+                renderSteppers(snackFoods, 'snack-steppers', 'bg-stone-600', 'snackFoods');
+                renderSteppers(sodaFoods, 'soda-steppers', 'bg-teal-600', 'sodaFoods');
+                renderSteppers(treats, 'treat-steppers', 'bg-purple-600', 'treats');
 
                 let resultsHTML = "";
                 let currentCat = "";
