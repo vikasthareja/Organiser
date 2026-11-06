@@ -121,12 +121,12 @@
                 <div class="flex items-center justify-between pb-2 border-b border-slate-100 gap-2">
                     <div>
                         <h2 class="text-base sm:text-lg font-bold text-slate-900">Daily Food Intake</h2>
-                        <span class="text-xs font-medium text-slate-400">Tap header to expand</span>
+                        <span class="text-xs font-medium text-slate-400">Tap header to expand / collapse</span>
                     </div>
                     <div class="flex flex-col items-end gap-1.5 shrink-0">
                         <div class="flex items-center gap-1.5">
-                            <button type="button" onclick="resetAll(true)" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition border border-slate-200 active:scale-95">Default</button>
-                            <button type="button" onclick="resetAll(false)" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition border border-slate-200 active:scale-95">Zero</button>
+                            <button type="button" onclick="resetAll(true, this)" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition border border-slate-200 active:scale-95">Reset</button>
+                            <button type="button" onclick="resetAll(false, this)" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition border border-slate-200 active:scale-95">Set to 0</button>
                         </div>
                         <button type="button" onclick="toggleAllFoodCategories()" id="toggle-categories-btn" class="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded w-full transition border border-slate-200 active:scale-95">Collapse All</button>
                     </div>
@@ -386,6 +386,20 @@
             }
         };
 
+        function showTemporaryConfirmation(btn, text = "Done ✓") {
+            if (!btn) return;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = text;
+            btn.disabled = true;
+            const oldColor = btn.style.color;
+            btn.style.color = "#059669"; // Tailwind emerald-600 color
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                btn.style.color = oldColor;
+            }, 6000);
+        }
+
         const breakfastFoods = [
             { id: 'bf_sandwich', name: "Potato Sandwich", desc: "Bread slice with lightly spiced potato filling. Paneer tracked in Dairy.", baseQty: 2, step: 1, min: 0, max: 6, unit: "bread slice", nutrients: { cal: 93, pro: 2.5, fib: 1.3, sat_fat: 0.6, unsat_fat: 1.5, cal_mg: 19, mag: 22, zn: 0.4, pot: 175, fe: 0.9, vit_a: 15, vit_c: 4.5, vit_b12: 0, vit_d: 0 } },
             { id: 'bf_idli_sambar', name: "Idli Sambar (1 Plate)", desc: "2 steamed rice & urad dal idlis with 1 bowl vegetable sambar.", baseQty: 0, step: 1, min: 0, max: 4, unit: "plate (2 idlis + sambar)", nutrients: { cal: 215, pro: 7.0, fib: 4.2, sat_fat: 0.8, unsat_fat: 1.8, cal_mg: 45, mag: 42, zn: 0.8, pot: 320, fe: 1.8, vit_a: 45, vit_c: 5.5, vit_b12: 0, vit_d: 0 } },
@@ -441,8 +455,10 @@
             { id: 'peanuts', name: "Salted Peanuts", desc: "Roasted salted peanuts (20g); rich in plant protein, magnesium, and healthy MUFA.", baseQty: 0, step: 1, min: 0, max: 5, unit: "portion (20g)", nutrients: { cal: 118, pro: 5.0, fib: 1.6, sat_fat: 1.5, unsat_fat: 8.5, cal_mg: 18, mag: 34, zn: 0.65, pot: 140, fe: 0.7, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } },
             { id: 'seeds', name: "Seed Mix (Pumpkin, Flax, Sesame)", desc: "1:1:1 seed blend providing plant omega-3s, zinc, and magnesium.", baseQty: 1, step: 1, min: 0, max: 4, unit: "tbsp", nutrients: { cal: 85, pro: 3.3, fib: 2.2, sat_fat: 1.0, unsat_fat: 5.5, cal_mg: 62, mag: 65, zn: 1.3, pot: 105, fe: 2.0, vit_a: 8, vit_c: 0.3, vit_b12: 0, vit_d: 0 } },
             { id: 'almonds', name: "Almonds", desc: "Whole almonds delivering vitamin E, magnesium, and monounsaturated lipids.", baseQty: 10, step: 5, min: 0, max: 30, unit: "nuts", nutrients: { cal: 7, pro: 0.25, fib: 0.3, sat_fat: 0.05, unsat_fat: 0.55, cal_mg: 3.2, mag: 3.2, zn: 0.04, pot: 8.7, fe: 0.3, vit_a: 1, vit_c: 0, vit_b12: 0, vit_d: 0 } },
+            { id: 'cashews', name: "Cashews", desc: "Rich in zinc, magnesium, and creamy monounsaturated fats.", baseQty: 4, step: 2, min: 0, max: 20, unit: "nuts", nutrients: { cal: 8, pro: 0.3, fib: 0.05, sat_fat: 0.15, unsat_fat: 0.6, cal_mg: 0.6, mag: 4.4, zn: 0.09, pot: 10, fe: 0.1, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } },
             { id: 'walnut', name: "Walnuts (Tata Sampann Halves)", desc: "Shelled halves rich in ALA omega-3. 2 halves equal 1 whole walnut (~5g).", baseQty: 2, step: 1, min: 0, max: 10, unit: "pieces (halves)", nutrients: { cal: 17, pro: 0.38, fib: 0.17, sat_fat: 0.16, unsat_fat: 1.50, cal_mg: 2.5, mag: 4.0, zn: 0.08, pot: 11, fe: 0.07, vit_a: 1, vit_c: 0.05, vit_b12: 0, vit_d: 0 } },
-            { id: 'pistachio', name: "Pistachios (Tata Sampann)", desc: "Pistachio kernels rich in potassium, lutein, and carotenoids.", baseQty: 4, step: 1, min: 0, max: 20, unit: "nuts / kernels", nutrients: { cal: 4, pro: 0.14, fib: 0.07, sat_fat: 0.04, unsat_fat: 0.30, cal_mg: 0.7, mag: 0.85, zn: 0.015, pot: 7.2, fe: 0.03, vit_a: 3, vit_c: 0.04, vit_b12: 0, vit_d: 0 } }
+            { id: 'pistachio', name: "Pistachios (Tata Sampann)", desc: "Pistachio kernels rich in potassium, lutein, and carotenoids.", baseQty: 4, step: 1, min: 0, max: 20, unit: "nuts / kernels", nutrients: { cal: 4, pro: 0.14, fib: 0.07, sat_fat: 0.04, unsat_fat: 0.30, cal_mg: 0.7, mag: 0.85, zn: 0.015, pot: 7.2, fe: 0.03, vit_a: 3, vit_c: 0.04, vit_b12: 0, vit_d: 0 } },
+            { id: 'raisins', name: "Raisins (Soaked)", desc: "Iron & potassium rich. Best paired with nuts to blunt sugar spikes.", baseQty: 0.5, step: 0.5, min: 0, max: 4, unit: "tbsp", nutrients: { cal: 45, pro: 0.5, fib: 0.6, sat_fat: 0, unsat_fat: 0, cal_mg: 8, mag: 5, zn: 0.05, pot: 112, fe: 0.3, vit_a: 0, vit_c: 0, vit_b12: 0, vit_d: 0 } }
         ];
 
         const sodaFoods = [
@@ -456,6 +472,7 @@
             { id: 'treat_mcd_fries', name: "McD French Fries (Medium)", desc: "McDonald's India medium french fries (~108g); fried in vegetable oil.", baseQty: 0, step: 1, min: 0, max: 3, unit: "medium pack", nutrients: { cal: 320, pro: 4.5, fib: 3.8, sat_fat: 2.8, unsat_fat: 12.5, cal_mg: 15, mag: 28, zn: 0.5, pot: 520, fe: 0.8, vit_a: 0, vit_c: 4.5, vit_b12: 0, vit_d: 0 } },
             { id: 'treat_carb', name: "Garlic Naan / Samosa / Chaat", desc: "Street snack or bread; higher in refined carbs and sodium.", baseQty: 0, step: 1, min: 0, max: 3, unit: "portion", nutrients: { cal: 280, pro: 6.0, fib: 2.0, sat_fat: 4.0, unsat_fat: 8.0, cal_mg: 30, mag: 15, zn: 0.4, pot: 100, fe: 1.2, vit_a: 25, vit_c: 2.0, vit_b12: 0, vit_d: 0 } },
             { id: 'treat_rich', name: "Dal Makhani / Paneer Tikka", desc: "Restaurant gravy preparation; higher fat and caloric load.", baseQty: 0, step: 1, min: 0, max: 3, unit: "katori/plate", nutrients: { cal: 280, pro: 12.0, fib: 3.5, sat_fat: 8.5, unsat_fat: 9.5, cal_mg: 100, mag: 30, zn: 1.0, pot: 200, fe: 2.5, vit_a: 140, vit_c: 3.0, vit_b12: 0.4, vit_d: 15 } },
+            { id: 'treat_medium_meal', name: "Medium Meal (Masala Dosa / Veg Thali)", desc: "Standard restaurant portion (e.g., 1 Masala Dosa with Sambar or a basic mini-thali).", baseQty: 0, step: 1, min: 0, max: 3, unit: "portion (500 kcal)", nutrients: { cal: 500, pro: 12.0, fib: 6.0, sat_fat: 4.5, unsat_fat: 12.0, cal_mg: 80, mag: 45, zn: 1.2, pot: 350, fe: 2.5, vit_a: 60, vit_c: 4.0, vit_b12: 0, vit_d: 0 } },
             { id: 'treat_heavy', name: "Biryani / Chhole Bhature / Pizza", desc: "Heavy meal: full plate biryani, chhole bhature, or half medium pizza.", baseQty: 0, step: 1, min: 0, max: 3, unit: "portion (700 kcal)", nutrients: { cal: 700, pro: 16.0, fib: 6.5, sat_fat: 12.0, unsat_fat: 16.0, cal_mg: 180, mag: 60, zn: 2.0, pot: 420, fe: 3.8, vit_a: 160, vit_c: 5.0, vit_b12: 0.5, vit_d: 20 } },
             { id: 'treat_sweet', name: "Gulab Jamun / Ice Cream / Halwa", desc: "1 sweet serving; high in simple sugars and dairy fats.", baseQty: 0, step: 1, min: 0, max: 4, unit: "serving (1 pc / scoop)", nutrients: { cal: 180, pro: 2.5, fib: 0.4, sat_fat: 5.0, unsat_fat: 3.5, cal_mg: 50, mag: 15, zn: 0.3, pot: 90, fe: 0.4, vit_a: 60, vit_c: 0.2, vit_b12: 0.2, vit_d: 10 } }
         ];
@@ -507,7 +524,7 @@
             allItems.forEach(f => { currentValues[f.id] = f.baseQty; });
         }
 
-        window.resetAll = function(toDefault) {
+        window.resetAll = function(toDefault, btn = null) {
             currentValues['exercise'] = toDefault ? 150 : 0;
             allItems.forEach(item => {
                 currentValues[item.id] = toDefault ? item.baseQty : 0;
@@ -515,9 +532,10 @@
             autoSaveToLocal();
             refreshDisplays();
             calculateNutrition();
+            if (btn) showTemporaryConfirmation(btn, toDefault ? "Reset ✓" : "Set to 0 ✓");
         };
 
-        window.resetCategory = function(catName, toDefault) {
+        window.resetCategory = function(catName, toDefault, btn = null) {
             const items = categoryMap[catName];
             if (!items) return;
             items.forEach(item => {
@@ -526,6 +544,7 @@
             autoSaveToLocal();
             refreshDisplays();
             calculateNutrition();
+            if (btn) showTemporaryConfirmation(btn, toDefault ? "Reset ✓" : "Set to 0 ✓");
         };
 
         function loadDayData(dateStr) {
@@ -880,7 +899,7 @@
 
             const badgeDia = document.getElementById('badge-diabetes');
             const descDia = document.getElementById('desc-diabetes');
-            const hasHeavyTreats = (currentValues['treat_heavy'] > 0 || currentValues['treat_carb'] > 1 || currentValues['treat_sweet'] > 0 || (currentValues['treat_mcd_burger'] || 0) > 0 || (currentValues['treat_mcd_fries'] || 0) > 0 || (currentValues['treat_small_meal'] || 0) > 1);
+            const hasHeavyTreats = (currentValues['treat_heavy'] > 0 || currentValues['treat_carb'] > 1 || currentValues['treat_sweet'] > 0 || (currentValues['treat_mcd_burger'] || 0) > 0 || (currentValues['treat_mcd_fries'] || 0) > 0 || (currentValues['treat_small_meal'] || 0) > 1 || (currentValues['treat_medium_meal'] || 0) > 0);
             if (badgeDia && descDia) {
                 if (t.fib >= 28 && t.pro >= 55 && !hasHeavyTreats) {
                     badgeDia.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
@@ -902,8 +921,8 @@
             try {
                 const renderSteppers = (items, containerId, btnBgClass, catName) => {
                     let html = `<div class="flex justify-end gap-1.5 mb-1 pb-1.5 border-b border-slate-100">
-                        <button type="button" onclick="resetCategory('${catName}', true)" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition">Default</button>
-                        <button type="button" onclick="resetCategory('${catName}', false)" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition">Zero</button>
+                        <button type="button" onclick="resetCategory('${catName}', true, this)" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition">Reset</button>
+                        <button type="button" onclick="resetCategory('${catName}', false, this)" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition">Set to 0</button>
                     </div>`;
                     items.forEach(item => {
                         html += '<div class="py-2.5 flex items-center justify-between gap-3">' +
